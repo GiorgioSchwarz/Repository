@@ -1,0 +1,68 @@
+— Update operations (::save(), ::delete())
+—— Can the user insert/update the record?
+——— e.g. accountId
+——— e.g. client areaId
+——— e.g. report -> client -> areaId
+——— e.g. bulletin userId
+—— Should some assignment be populated automatically?
+——— e.g. accountId
+——— e.g. created_at
+——— e.g. updated_at
+——— e.g. userId
+—— Does the model have the required properties?
+
+————————————————————————————————————————————————————————————————————————————————————————————————————
+
+ClientRepository::bindMiddleware('client', new CanUpdateClient(1, 1));
+ClientRepository::bindMiddleware('area', new CanAccessArea(1, 1));
+ClientRepository::bindPopulator('account', new SetAccountId(1));
+ClientRepository::bindPopulator('timestamp', new SetTimestamps());
+ClientRepository::bindValidator('client', new Validator('name' => 'required|editable', 'areaId' => 'required|editable', 'accountId' => 'required', 'createdAt' => 'required', 'updatedAt' => 'editable'));
+
+ClientRepository::save(new Client(['name' => 'My client', 'areaId' => 11]));
+
+SELECT areaId FROM users_privileges WHERE userId = ? AND areaId = ?
+-> INSERT INTO clients (name, areaId, accountId, createdAt) VALUES (?, ?, ?, ?),
+
+ClientRepository::save(new Client(['name' => 'My client', 'areaId' => 12, 'clientId' => 11]));
+
+SELECT clientId FROM clients WHERE clientId = ? AND accountId = ? AND areaId IN (SELECT areaId FROM users_privileges WHERE userId = ?)
+SELECT areaId FROM users_privileges WHERE userId = ? AND areaId = ?
+-> UPDATE clients SET name = ?, areaId = ?, updatedAt = ? WHERE clientId = ?
+
+————————————————————————————————————————————————————————————————————————————————————————————————————
+
+ReportRepository::bindMiddleware('client', new CanUpdateClient(1, 1));
+ReportRepository::bindPopulator('account', new SetAccountId(1));
+ReportRepository::bindPopulator('user', new SetUserId(1));
+ReportRepository::bindPopulator('timestamp', new SetTimestamps());
+ReportRepository::bindValidator('report', new Validator('report' => 'required|editable', 'clientId' => 'required', 'accountId' => 'required', 'userId' => 'required', 'editorUserId' => 'editable'));
+
+ReportRepository::save(new Report(['report' => 'Lorem ipsum dolor', 'clientId' => 12]));
+
+SELECT clientId FROM clients WHERE clientId = ? AND accountId = ? AND areaId IN(SELECT areaId FROM users_privileges WHERE userId = ?)
+-> INSERT INTO reports (report, clientId, accountId, userId, createdAt) VALUES (?, ?, ?, ?, ?)
+
+ReportRepository::save(new Report(['report' => 'Lorem ipsum dolor', 'clientId' => 12, 'reportId' => 11]));
+
+SELECT clientId FROM clients WHERE clientId = ? AND accountId = ? AND areaId IN(SELECT areaId FROM users_privileges WHERE userId = ?)
+-> UPDATE reports SET report = ?, editorUserId = ?, updatedAt = ? WHERE reportId = ?
+
+————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
+— Select
+—— Can the user select the record?
+——— e.g. accountId
+
+User::bindScope('account', new AccountScope(1));
+User::query()->where(['id' => 11]);
+User::query()->withoutScope('account')->where(['id' => 11]);
+
+SELECT * FROM users WHERE id = ? AND accountId = ?
+
+ClientRepository::bindScope('account', new AccountScope(1));
+ClientRepository::bindScope('area', new AreaScope(1, 1));
+
+ClientRepository::query()->where(['id' => 11])->getFirst();
+
+SELECT * FROM clients WHERE (id = ?) AND (accountId = ?) AND (areaId IN (SELECT areaId FROM users_privileges WHERE accountId = ? AND userId = ?));

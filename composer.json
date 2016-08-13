@@ -1,0 +1,26 @@
+{
+    "name": "molnapps/control",
+    "description": "Front controller utility supporting commands, commands map and command middleware",
+    "authors": [
+        {
+            "name": "***REMOVED***",
+            "email": "***REMOVED***"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+    },
+    "require-dev": {
+        "phpunit/phpunit": "5.4.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "MolnApps\\": "src/MolnApps/"
+        }
+    },
+    "autoload-dev": {
+        "files": [
+            "tests/MolnApps/Repository/TestCase.php"
+        ]
+    }
+}
