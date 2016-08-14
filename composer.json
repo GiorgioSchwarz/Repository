@@ -1,5 +1,5 @@
 {
-    "name": "molnapps/control",
+    "name": "molnapps/repository",
     "description": "Repository class supporting middleware, populators, validators and scopes.",
     "authors": [
         {
