@@ -9,6 +9,8 @@ trait QueryScopes
 {
 	private $scopes = [];
 
+	private $ignore = [];
+
 	public function addScope($name, Scope $populator)
 	{
 		$this->scopes[$name] = $populator;
@@ -28,11 +30,32 @@ trait QueryScopes
 		return isset($this->scopes[$name]);
 	}
 
+	public function withoutScope($scope)
+	{
+		return $this->withoutScopes([$scope]);
+	}
+
+	public function withoutScopes(array $scopes)
+	{
+		$this->ignore = array_merge($this->ignore, $scopes);
+
+		return $this;
+	}
+
+	private function resetIgnoredScopes()
+	{
+		$this->ignore = [];
+	}
+
 	protected function applyScope(QueryBuilder $queryBuilder)
 	{
-		foreach ($this->scopes as $scope) {
-			$scope->apply($queryBuilder);
+		foreach ($this->scopes as $name => $scope) {
+			if ( ! in_array($name, $this->ignore)) {
+				$scope->apply($queryBuilder);
+			}
 		}
+
+		$this->resetIgnoredScopes();
 
 		return true;
 	}

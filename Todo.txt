@@ -1,3 +1,2 @@
 Todo:
-— Query builder should actually return a MolnApps\Database\Select statement, rather than being converted to an array. Otherwise, we could add a test in MolnApps\Database\TableGateway to support some sort of Statement where parameter.
-— We should add the possibility to ignore one or more scopes.
+— Do some integration tests with MolnApps\Database;

@@ -9,6 +9,7 @@ use \MolnApps\Repository\Contracts\Model;
 use \MolnApps\Repository\Contracts\Middleware;
 use \MolnApps\Repository\Contracts\Validator;
 use \MolnApps\Repository\Contracts\Populator;
+use \MolnApps\Repository\Contracts\Scope;
 
 class TestCase extends \PHPUnit_Framework_TestCase
 {
@@ -17,6 +18,8 @@ class TestCase extends \PHPUnit_Framework_TestCase
 	protected $repository;
 
 	protected $assignments = [];
+
+	private $queryBuilder;
 
 	protected function setUp()
 	{
@@ -113,9 +116,10 @@ class TestCase extends \PHPUnit_Framework_TestCase
 
 	// ! Table methods
 
-	protected function tableShouldReceiveSelect(array $query, array $rows)
-	{
-		$this->tableExpects('select')->with($query)->willReturn($rows);
+	protected function tableShouldReceiveExecuteSelect(array $returnsRows = []) {
+		$this->repositoryUsesQueryBuilder();
+
+		$this->tableExpects('executeSelect')->with($this->queryBuilder)->willReturn($returnsRows);
 	}
 
 	protected function tableShouldReceiveInsert(array $assignments)
@@ -212,5 +216,46 @@ class TestCase extends \PHPUnit_Framework_TestCase
 	protected function collectionFactoryShouldReturn(array $rows)
 	{
 		$this->collectionFactory->method('createCollection')->willReturn((object)$rows);
+	}
+
+	// ! Scope methods
+
+	protected function createScope($where)
+	{
+		$scope = $this->createMock(Scope::class);
+		
+		$scope->method('apply')->will(
+			$this->returnCallback(
+				function(QueryBuilder $queryBuilder) use ($where) {
+					$queryBuilder->where($where);
+				}
+			)
+		);
+
+		return $scope;
+	}
+
+	// ! Repository and QueryBuilder methods
+
+	protected function repositoryUsesQueryBuilder(QueryBuilder $queryBuilder = null)
+	{
+		$this->repository->setQueryBuilder($queryBuilder);
+
+		$this->queryBuilder = $this->repository->getQueryBuilder();
+	}
+
+	protected function createQueryBuilder()
+	{
+		return $this->repository->createQueryBuilder();
+	}
+
+	protected function assertQueryBuilder($expectedArray)
+	{
+		$this->assertEquals($expectedArray, $this->queryBuilder->toArray());
+	}
+
+	protected function assertQueryBuilderWasReset()
+	{
+		$this->assertNotEquals($this->queryBuilder, $this->repository->getQueryBuilder());
 	}
 }

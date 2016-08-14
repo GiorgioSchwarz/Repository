@@ -43,20 +43,32 @@ class Repository
 	{
 		$this->applyScope($this->getQueryBuilder());
 
-		$rows = $this->table->select($this->getQueryBuilder()->toArray());
+		$rows = $this->table->executeSelect($this->getQueryBuilder());
 
 		$this->resetQueryBuilder();
 
 		return $this->collectionFactory->createCollection($rows);
 	}
 
-	private function getQueryBuilder()
+	public function getQueryBuilder()
 	{
 		if ( ! $this->queryBuilder) {
-			$this->queryBuilder = new QueryBuilder;
+			$this->setQueryBuilder();
 		}
 
 		return $this->queryBuilder;
+	}
+
+	public function setQueryBuilder(QueryBuilder $queryBuilder = null)
+	{
+		$this->queryBuilder = ($queryBuilder) ?: $this->createQueryBuilder();
+
+		return $this;
+	}
+
+	public function createQueryBuilder()
+	{
+		return new QueryBuilder;
 	}
 
 	private function resetQueryBuilder()

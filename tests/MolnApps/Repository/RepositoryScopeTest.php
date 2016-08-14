@@ -44,54 +44,109 @@ class RepositoryScopeTest extends TestCase
 	/** @test */
 	public function it_applies_a_scope_to_query()
 	{
-		$accountScope = $this->createMock(Scope::class);
-		
-		$accountScope->method('apply')->will($this->returnCallback(function(QueryBuilder $queryBuilder){
-			$queryBuilder->where(['accountId' => 12]);
-		}));
-		
+		$accountScope = $this->createScope(['accountId' => 12]);
 		$this->repository->addScope('account', $accountScope);
 
-		$this->tableShouldReceiveSelect(['where' => ['foo' => 'bar', 'accountId' => 12]], []);
+		$this->tableShouldReceiveExecuteSelect();
 
 		$this->repository->where(['foo' => 'bar'])->find();
+
+		$this->assertQueryBuilder(['where' => ['foo' => 'bar', 'accountId' => 12]]);
 	}
 
 	/** @test */
 	public function it_applies_multiple_scopes_to_query()
 	{
-		$accountScope = $this->createMock(Scope::class);
-		
-		$accountScope->method('apply')->will($this->returnCallback(function(QueryBuilder $queryBuilder){
-			$queryBuilder->where(['accountId' => 12]);
-		}));
+		$accountScope = $this->createScope(['accountId' => 12]);
 
-		$areaScope = $this->createMock(Scope::class);
+		$areaIdsQuery = $this->getAreaIdsQuery();
 		
-		$areaIdsQuery = new QueryBuilder();
-			$areaIdsQuery
-				->columns(['areaId'])
-				->where(['userId' => 5]);
-
-		$areaScope
-			->method('apply')
-			->will($this->returnCallback(
-				function(QueryBuilder $queryBuilder) use ($areaIdsQuery) {
-					$queryBuilder->where([['areaId', 'in', $areaIdsQuery]]);
-				}
-			));
+		$areaScope = $this->createScope([['areaId', 'in', $areaIdsQuery]]);
 		
 		$this->repository->addScope('account', $accountScope);
-		$this->repository->addScope('user', $areaScope);
+		$this->repository->addScope('area', $areaScope);
 
-		$this->tableShouldReceiveSelect([
-			'where' => [
-				'foo' => 'bar', 
-				'accountId' => 12, 
-				['areaId', 'in', $areaIdsQuery]
-			]
-		], []);
+		$this->tableShouldReceiveExecuteSelect();
 
 		$this->repository->where(['foo' => 'bar'])->find();
+
+		$this->assertQueryBuilder(
+			['where' => ['foo' => 'bar', 'accountId' => 12, ['areaId', 'in', $areaIdsQuery]]]
+		);
+	}
+
+	/** @test */
+	public function it_ignores_a_scope()
+	{
+		$accountScope = $this->createScope(['accountId' => 12]);
+		$userScope = $this->createScope(['userId' => 5]);
+
+		$this->repository->addScope('account', $accountScope);
+		$this->repository->addScope('user', $userScope);
+
+		$this->tableShouldReceiveExecuteSelect();
+
+		$this->repository->withoutScope('account')->where(['foo' => 'bar'])->find();
+
+		$this->assertQueryBuilder(['where' => ['foo' => 'bar', 'userId' => 5]]);
+	}
+
+	/** @test */
+	public function it_ignores_multiple_scopes()
+	{
+		$accountScope = $this->createScope(['accountId' => 12]);
+		$userScope = $this->createScope(['userId' => 5]);
+		
+		$this->repository->addScope('account', $accountScope);
+		$this->repository->addScope('user', $userScope);
+
+		$this->tableShouldReceiveExecuteSelect();
+
+		$this->repository->withoutScopes(['account', 'user'])->where(['foo' => 'bar'])->find();
+
+		$this->assertQueryBuilder(['where' => ['foo' => 'bar']]);
+	}
+
+	/** @test */
+	public function it_resets_ignored_scopes_after_the_query_was_run()
+	{
+		$accountScope = $this->createScope(['accountId' => 12]);
+		$userScope = $this->createScope(['userId' => 5]);
+		
+		$this->repository->addScope('account', $accountScope);
+		$this->repository->addScope('user', $userScope);
+
+		$queryBuilder1 = $this->createQueryBuilder();
+		$queryBuilder2 = $this->createQueryBuilder();
+
+		$this->table
+			->method('executeSelect')
+			->withConsecutive([$queryBuilder1], [$queryBuilder2])
+			->willReturn([]);
+
+		// Execute query 1
+		$this->repositoryUsesQueryBuilder($queryBuilder1);
+
+		$this->repository->withoutScopes(['account', 'user'])->where(['foo' => 'bar'])->find();
+
+		$this->assertQueryBuilder(['where' => ['foo' => 'bar']]);
+
+		// Execute query 2
+		$this->repositoryUsesQueryBuilder($queryBuilder2);
+		
+		$this->repository->where(['foo' => 'bar'])->find();
+
+		$this->assertQueryBuilder(['where' => ['foo' => 'bar', 'accountId' => 12, 'userId' => 5]]);
+	}
+
+	private function getAreaIdsQuery()
+	{
+		$areaIdsQuery = new QueryBuilder();
+		
+		$areaIdsQuery
+			->columns(['areaId'])
+			->where(['userId' => 5]);
+
+		return $areaIdsQuery;
 	}
 }
