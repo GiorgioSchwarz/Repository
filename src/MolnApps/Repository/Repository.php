@@ -10,6 +10,7 @@ use \MolnApps\Repository\Traits\ModelMiddlewares;
 use \MolnApps\Repository\Traits\AssignmentsPopulators;
 use \MolnApps\Repository\Traits\AssignmentsValidators;
 use \MolnApps\Repository\Traits\QueryScopes;
+use \MolnApps\Repository\Traits\QueryBuilder as QueryBuilderTrait;
 
 class Repository
 {
@@ -17,6 +18,7 @@ class Repository
 	use AssignmentsPopulators;
 	use AssignmentsValidators;
 	use QueryScopes;
+	use QueryBuilderTrait;
 
 	private $table;
 	private $collectionFactory;
@@ -31,9 +33,7 @@ class Repository
 
 	public function __call($name, $args)
 	{
-		$queryBuilderMethods = ['columns', 'where', 'orderBy', 'limit', 'offset', 'page'];
-		
-		if (in_array($name, $queryBuilderMethods)) {
+		if (in_array($name, $this->getQueryBuilderMethods())) {
 			call_user_func_array([$this->getQueryBuilder(), $name], $args);
 			return $this;
 		}
@@ -48,32 +48,6 @@ class Repository
 		$this->resetQueryBuilder();
 
 		return $this->collectionFactory->createCollection($rows);
-	}
-
-	public function getQueryBuilder()
-	{
-		if ( ! $this->queryBuilder) {
-			$this->setQueryBuilder();
-		}
-
-		return $this->queryBuilder;
-	}
-
-	public function setQueryBuilder(QueryBuilder $queryBuilder = null)
-	{
-		$this->queryBuilder = ($queryBuilder) ?: $this->createQueryBuilder();
-
-		return $this;
-	}
-
-	public function createQueryBuilder()
-	{
-		return new QueryBuilder;
-	}
-
-	private function resetQueryBuilder()
-	{
-		$this->queryBuilder = null;
 	}
 
 	public function save(Model $model)
