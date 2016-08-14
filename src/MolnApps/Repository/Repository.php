@@ -34,9 +34,19 @@ class Repository
 	public function __call($name, $args)
 	{
 		if (in_array($name, $this->getQueryBuilderMethods())) {
-			call_user_func_array([$this->getQueryBuilder(), $name], $args);
-			return $this;
+			return $this->invokeQueryBuilderMethod($name, $args);
 		}
+	}
+
+	private function invokeQueryBuilderMethod($name, $args)
+	{
+		call_user_func_array([$this->getQueryBuilder(), $name], $args);
+		return $this;
+	}
+
+	public function where(array $where)
+	{
+		return $this->invokeQueryBuilderMethod('where', [$where]);
 	}
 
 	public function find()
