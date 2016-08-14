@@ -5,7 +5,7 @@ namespace MolnApps\Repository\Traits;
 use \MolnApps\Repository\Contracts\Validator;
 use \MolnApps\Repository\Contracts\Model;
 
-trait AssignmentsValidators
+trait ModelValidators
 {
 	private $validators = [];
 

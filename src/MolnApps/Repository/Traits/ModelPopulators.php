@@ -5,7 +5,7 @@ namespace MolnApps\Repository\Traits;
 use \MolnApps\Repository\Contracts\Model;
 use \MolnApps\Repository\Contracts\Populator;
 
-trait AssignmentsPopulators
+trait ModelPopulators
 {
 	private $populators = [];
 

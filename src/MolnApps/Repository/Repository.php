@@ -7,16 +7,16 @@ use \MolnApps\Repository\Contracts\CollectionFactory;
 use \MolnApps\Repository\Contracts\Model;
 
 use \MolnApps\Repository\Traits\ModelMiddlewares;
-use \MolnApps\Repository\Traits\AssignmentsPopulators;
-use \MolnApps\Repository\Traits\AssignmentsValidators;
+use \MolnApps\Repository\Traits\ModelPopulators;
+use \MolnApps\Repository\Traits\ModelValidators;
 use \MolnApps\Repository\Traits\QueryScopes;
 use \MolnApps\Repository\Traits\QueryBuilder as QueryBuilderTrait;
 
 class Repository
 {
 	use ModelMiddlewares;
-	use AssignmentsPopulators;
-	use AssignmentsValidators;
+	use ModelPopulators;
+	use ModelValidators;
 	use QueryScopes;
 	use QueryBuilderTrait;
 
