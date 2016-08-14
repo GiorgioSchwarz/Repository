@@ -1,6 +1,6 @@
 {
     "name": "molnapps/control",
-    "description": "Front controller utility supporting commands, commands map and command middleware",
+    "description": "Repository class supporting middleware, populators, validators and scopes.",
     "authors": [
         {
             "name": "***REMOVED***",
